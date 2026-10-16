@@ -1,0 +1,295 @@
+.admin-login-page,
+.admin-page {
+    min-height: 100vh;
+    padding: 40px;
+    background: #101010;
+    color: #f5f1e8;
+    font-family: Arial, sans-serif;
+}
+
+.admin-login-page {
+    display: grid;
+    place-items: center;
+}
+
+.admin-login-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 36px;
+    border: 1px solid #3b3325;
+    border-radius: 14px;
+    background: #191919;
+}
+
+.admin-eyebrow {
+    color: #c9a45c;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.admin-login-card h1,
+.admin-header h1 {
+    margin: 10px 0;
+    font-size: clamp(26px, 4vw, 38px);
+}
+
+.admin-login-card p,
+.admin-header>div>p:last-child,
+.admin-table-heading p {
+    color: #bdb8ad;
+    line-height: 1.6;
+}
+
+.admin-login-card label {
+    display: block;
+    margin: 24px 0 8px;
+}
+
+.admin-login-card input,
+.admin-filters input,
+.admin-filters select {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid #49443a;
+    border-radius: 7px;
+    background: #111;
+    color: #fff;
+}
+
+.admin-primary-button,
+.admin-secondary-button {
+    padding: 11px 16px;
+    border: 1px solid #c9a45c;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.admin-primary-button {
+    width: 100%;
+    margin-top: 18px;
+    background: #c9a45c;
+    color: #17130c;
+}
+
+.admin-secondary-button {
+    background: transparent;
+    color: #e8d4a6;
+}
+
+.admin-primary-button:disabled,
+.admin-secondary-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
+.admin-back-link {
+    display: inline-block;
+    margin-top: 22px;
+    color: #d6b56d;
+    text-decoration: none;
+}
+
+.admin-back-link:hover {
+    text-decoration: underline;
+}
+
+.admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.admin-header-actions,
+.admin-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.admin-stat-card {
+    padding: 22px;
+    border: 1px solid #393226;
+    border-radius: 10px;
+    background: #1b1b1b;
+}
+
+.admin-stat-card span {
+    display: block;
+    color: #c0b9ab;
+    font-size: 13px;
+}
+
+.admin-stat-card strong {
+    display: block;
+    margin-top: 12px;
+    color: #d7b56b;
+    font-size: 30px;
+}
+
+.admin-table-card {
+    overflow: hidden;
+    border: 1px solid #393226;
+    border-radius: 12px;
+    background: #191919;
+}
+
+.admin-table-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px;
+    border-bottom: 1px solid #393226;
+}
+
+.admin-table-heading h2 {
+    margin: 0;
+}
+
+.admin-table-heading p {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.admin-filters input {
+    width: 230px;
+}
+
+.admin-filters select {
+    width: 160px;
+}
+
+.admin-table-scroll {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 16px;
+    border-bottom: 1px solid #302c25;
+    vertical-align: top;
+    font-size: 13px;
+}
+
+.admin-table th {
+    background: #222019;
+    color: #d7b56b;
+    white-space: nowrap;
+}
+
+.admin-table td strong,
+.admin-table td small {
+    display: block;
+}
+
+.admin-table td small {
+    margin-top: 6px;
+    color: #bdb8ad;
+}
+
+.admin-message {
+    min-width: 180px;
+    max-width: 280px;
+    overflow-wrap: anywhere;
+}
+
+.admin-table a {
+    color: #d7b56b;
+}
+
+.admin-status-select {
+    min-width: 125px;
+    padding: 8px;
+    border: 1px solid #51452f;
+    border-radius: 6px;
+    background: #111;
+    color: #f5f1e8;
+}
+
+.admin-empty {
+    padding: 32px;
+    color: #c0b9ab;
+    text-align: center;
+}
+
+.admin-error {
+    margin-top: 16px;
+    color: #ff9c92;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.admin-notice {
+    margin-bottom: 20px;
+}
+
+@media (max-width: 1000px) {
+    .admin-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-table-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-filters input {
+        width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .admin-login-page,
+    .admin-page {
+        padding: 20px 14px;
+    }
+
+    .admin-login-card {
+        padding: 24px;
+    }
+
+    .admin-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-header-actions,
+    .admin-filters {
+        flex-wrap: wrap;
+    }
+
+    .admin-stats {
+        gap: 10px;
+    }
+
+    .admin-stat-card {
+        padding: 16px;
+    }
+
+    .admin-stat-card strong {
+        font-size: 24px;
+    }
+
+    .admin-filters select {
+        width: 100%;
+    }
+}
