@@ -7,14 +7,24 @@ const cors = require("cors");
 const { Pool } = require("pg");
 
 const app = express();
-const corsOptions = {
-    origin: "https://diksha-realty.vercel.app",
-    methods: ["GET", "POST", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    optionsSuccessStatus: 204,
-};
 
-app.use(cors(corsOptions));
+const allowedOrigins = [
+    "https://diksha-realty.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "http://localhost:5177",
+];
+
+app.use(
+    cors({
+        origin: allowedOrigins,
+        methods: ["GET", "POST", "PATCH", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        optionsSuccessStatus: 204,
+    })
+);
 
 
 const PORT = Number(process.env.PORT) || 5000;
@@ -48,38 +58,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// CORS configuration.
-const normalizeOrigin = (url) => url.trim().replace(/\/+$/, "");
-
-const allowedOrigins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:5176",
-    "http://localhost:5177",
-    ...(process.env.FRONTEND_URL || "")
-        .split(",")
-        .map(normalizeOrigin)
-        .filter(Boolean),
-];
-
-app.use(
-    cors({
-        origin(origin, callback) {
-            if (
-                !origin ||
-                allowedOrigins.includes(normalizeOrigin(origin))
-            ) {
-                return callback(null, true);
-            }
-
-            return callback(new Error("Origin not allowed by CORS"));
-        },
-        methods: ["GET", "POST", "PATCH", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-        optionsSuccessStatus: 204,
-    })
-);
 
 app.use(express.json({ limit: "20kb" }));
 
