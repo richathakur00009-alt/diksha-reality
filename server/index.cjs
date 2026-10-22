@@ -296,6 +296,10 @@ async function startServer() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+        app.use((req, res, next) => {
+            console.log("INCOMING REQUEST:", req.method, req.url);
+            next();
+        });
 
         const server = app.listen(PORT, "0.0.0.0", () => {
             console.log(`Diksha Reality API running on port ${PORT}`);
