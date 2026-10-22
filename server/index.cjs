@@ -16,11 +16,18 @@ if (ADMIN_TOKEN.length < 32) {
 }
 
 if (!DATABASE_URL) {
-    console.error("DATABASE_URL is missing from environment variables.");
+    console.error("DATABASE_URL is missing.");
     process.exit(1);
 }
 
-// Configure permitted frontend origins.
+// Log every request before API routes.
+app.use((req, res, next) => {
+    console.log("INCOMING REQUEST:", req.method, req.url);
+    next();
+});
+
+const normalizeOrigin = (url) => url.trim().replace(/\/+$/, "");
+
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -29,17 +36,16 @@ const allowedOrigins = [
     "http://localhost:5177",
     ...(process.env.FRONTEND_URL || "")
         .split(",")
-        .map((url) => url.trim().replace(/\/+$/, ""))
+        .map(normalizeOrigin)
         .filter(Boolean),
 ];
 
 app.use(
     cors({
         origin(origin, callback) {
-            if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ""))) {
+            if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
                 return callback(null, true);
             }
-
             return callback(new Error("Origin not allowed by CORS"));
         },
         methods: ["GET", "POST", "PATCH", "OPTIONS"],
@@ -50,8 +56,6 @@ app.use(
 
 app.use(express.json({ limit: "20kb" }));
 
-// Neon PostgreSQL connection pool.
-// The Neon connection string should include its SSL settings.
 const pool = new Pool({
     connectionString: DATABASE_URL,
     max: 5,
@@ -69,15 +73,13 @@ function cleanText(value, maxLength = 2000) {
         : "";
 }
 
-// Protect admin-only endpoints.
 function requireAdmin(req, res, next) {
     const authorization = req.get("Authorization") || "";
     const token = authorization.startsWith("Bearer ")
         ? authorization.slice(7).trim()
         : "";
 
-    if (token.length !== ADMIN_TOKEN.length ||
-        token !== ADMIN_TOKEN) {
+    if (token.length !== ADMIN_TOKEN.length || token !== ADMIN_TOKEN) {
         return res.status(401).json({
             error: "Admin authentication required.",
         });
@@ -86,12 +88,12 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-// Health check: verifies both API and database connectivity.
+// Health check.
 app.get("/api/health", async (req, res) => {
     try {
         await pool.query("SELECT 1");
 
-        return res.json({
+        return res.status(200).json({
             status: "ok",
             service: "Diksha Realty API",
             database: "connected",
@@ -106,7 +108,7 @@ app.get("/api/health", async (req, res) => {
     }
 });
 
-// Save a customer enquiry.
+// Save customer enquiry.
 app.post("/api/enquiries", async (req, res) => {
     try {
         const name = cleanText(req.body?.name, 100);
@@ -121,16 +123,11 @@ app.post("/api/enquiries", async (req, res) => {
         const digits = phone.replace(/\D/g, "");
 
         if (!name) {
-            return res.status(400).json({
-                error: "Name is required.",
-            });
+            return res.status(400).json({ error: "Name is required." });
         }
 
-        if (
-            !/^\+?[0-9\s()-]+$/.test(phone) ||
-            digits.length < 10 ||
-            digits.length > 15
-        ) {
+        if (!/^\+?[0-9\s()-]+$/.test(phone) ||
+            digits.length < 10 || digits.length > 15) {
             return res.status(400).json({
                 error: "Please enter a valid phone number.",
             });
@@ -156,7 +153,7 @@ app.post("/api/enquiries", async (req, res) => {
 
         const result = await pool.query(
             `INSERT INTO enquiries
-        (name, phone, enquiry_type, budget, message, status)
+       (name, phone, enquiry_type, budget, message, status)
        VALUES ($1, $2, $3, $4, $5, 'New')
        RETURNING id`,
             [name, phone, enquiryType, budget, message]
@@ -169,14 +166,13 @@ app.post("/api/enquiries", async (req, res) => {
         });
     } catch (error) {
         console.error("Save enquiry error:", error.message);
-
         return res.status(500).json({
             error: "Unable to save enquiry.",
         });
     }
 });
 
-// List enquiries - admin only.
+// List enquiries (admin only).
 app.get("/api/enquiries", requireAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -193,19 +189,16 @@ app.get("/api/enquiries", requireAdmin, async (req, res) => {
       ORDER BY id DESC
     `);
 
-        return res.json({
-            enquiries: result.rows,
-        });
+        return res.json({ enquiries: result.rows });
     } catch (error) {
         console.error("Load enquiries error:", error.message);
-
         return res.status(500).json({
             error: "Unable to load enquiries.",
         });
     }
 });
 
-// Update enquiry status - admin only.
+// Update enquiry status (admin only).
 app.patch(
     "/api/enquiries/:id/status",
     requireAdmin,
@@ -213,6 +206,7 @@ app.patch(
         try {
             const id = Number(req.params.id);
             const status = cleanText(req.body?.status, 30);
+
             const validStatuses = [
                 "New",
                 "Contacted",
@@ -252,7 +246,6 @@ app.patch(
             });
         } catch (error) {
             console.error("Update status error:", error.message);
-
             return res.status(500).json({
                 error: "Unable to update enquiry status.",
             });
@@ -260,8 +253,18 @@ app.patch(
     }
 );
 
-// Handle malformed JSON and other API errors.
+// Unknown API routes.
+app.use("/api", (req, res) => {
+    return res.status(404).json({
+        error: "API route not found.",
+        path: req.originalUrl,
+    });
+});
+
+// Error handler.
 app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+
     if (err.message === "Origin not allowed by CORS") {
         return res.status(403).json({
             error: "Origin not allowed by CORS.",
@@ -275,7 +278,6 @@ app.use((err, req, res, next) => {
     }
 
     console.error("API error:", err.message);
-
     return res.status(500).json({
         error: "Internal server error.",
     });
@@ -283,7 +285,6 @@ app.use((err, req, res, next) => {
 
 async function startServer() {
     try {
-        // Create the enquiries table if it does not exist.
         await pool.query(`
       CREATE TABLE IF NOT EXISTS enquiries (
         id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
@@ -296,14 +297,15 @@ async function startServer() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
-        app.use((req, res, next) => {
-            console.log("INCOMING REQUEST:", req.method, req.url);
-            next();
-        });
 
         const server = app.listen(PORT, "0.0.0.0", () => {
-            console.log(`Diksha Reality API running on port ${PORT}`);
+            console.log(`Diksha Realty API running on port ${PORT}`);
             console.log("PostgreSQL database is ready.");
+        });
+
+        server.on("error", (error) => {
+            console.error("HTTP server error:", error.message);
+            process.exitCode = 1;
         });
 
         let shuttingDown = false;
