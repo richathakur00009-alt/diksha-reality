@@ -4,17 +4,18 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-app.use(cors({
-    origin: [
-        "https://diksha-realty.vercel.app"
-    ],
-    methods: ["GET", "POST", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
-
 const { Pool } = require("pg");
 
 const app = express();
+
+app.use(
+    cors({
+        origin: ["https://diksha-realty.vercel.app"],
+        methods: ["GET", "POST", "PATCH", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+        optionsSuccessStatus: 204,
+    })
+);
 const PORT = Number(process.env.PORT) || 5000;
 const ADMIN_TOKEN = (process.env.ADMIN_TOKEN || "").trim();
 const DATABASE_URL = (process.env.DATABASE_URL || "").trim();
