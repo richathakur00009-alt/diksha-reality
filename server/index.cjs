@@ -3,6 +3,15 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+
+app.use(cors({
+    origin: [
+        "https://diksha-realty.vercel.app"
+    ],
+    methods: ["GET", "POST", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
 const { Pool } = require("pg");
 
 const app = express();
