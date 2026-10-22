@@ -53,7 +53,7 @@ export default function EnquiryForm() {
         setLoading(true);
 
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(`${API_URL}/enquiries`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
