@@ -7,7 +7,6 @@ const cors = require("cors");
 const { Pool } = require("pg");
 
 const app = express();
-
 const corsOptions = {
     origin: "https://diksha-realty.vercel.app",
     methods: ["GET", "POST", "PATCH", "OPTIONS"],
@@ -16,9 +15,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
 
-app.use(express.json());
+
 const PORT = Number(process.env.PORT) || 5000;
 const ADMIN_TOKEN = (process.env.ADMIN_TOKEN || "").trim();
 const DATABASE_URL = (process.env.DATABASE_URL || "").trim();
