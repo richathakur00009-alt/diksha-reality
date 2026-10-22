@@ -10,22 +10,34 @@ const PORT = Number(process.env.PORT) || 5000;
 const ADMIN_TOKEN = (process.env.ADMIN_TOKEN || "").trim();
 const DATABASE_URL = (process.env.DATABASE_URL || "").trim();
 
+// Validate environment variables.
 if (ADMIN_TOKEN.length < 32) {
     console.error("ADMIN_TOKEN must contain at least 32 characters.");
     process.exit(1);
 }
 
 if (!DATABASE_URL) {
-    console.error("DATABASE_URL is missing.");
+    console.error("DATABASE_URL is missing from environment variables.");
     process.exit(1);
 }
 
-// Log every request before API routes.
+// Log requests and their final response status.
 app.use((req, res, next) => {
     console.log("INCOMING REQUEST:", req.method, req.url);
+
+    res.on("finish", () => {
+        console.log(
+            "RESPONSE:",
+            req.method,
+            req.url,
+            res.statusCode
+        );
+    });
+
     next();
 });
 
+// CORS configuration.
 const normalizeOrigin = (url) => url.trim().replace(/\/+$/, "");
 
 const allowedOrigins = [
@@ -43,9 +55,13 @@ const allowedOrigins = [
 app.use(
     cors({
         origin(origin, callback) {
-            if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
+            if (
+                !origin ||
+                allowedOrigins.includes(normalizeOrigin(origin))
+            ) {
                 return callback(null, true);
             }
+
             return callback(new Error("Origin not allowed by CORS"));
         },
         methods: ["GET", "POST", "PATCH", "OPTIONS"],
@@ -56,6 +72,7 @@ app.use(
 
 app.use(express.json({ limit: "20kb" }));
 
+// PostgreSQL connection.
 const pool = new Pool({
     connectionString: DATABASE_URL,
     max: 5,
@@ -73,13 +90,17 @@ function cleanText(value, maxLength = 2000) {
         : "";
 }
 
+// Admin authentication.
 function requireAdmin(req, res, next) {
     const authorization = req.get("Authorization") || "";
     const token = authorization.startsWith("Bearer ")
         ? authorization.slice(7).trim()
         : "";
 
-    if (token.length !== ADMIN_TOKEN.length || token !== ADMIN_TOKEN) {
+    if (
+        token.length !== ADMIN_TOKEN.length ||
+        token !== ADMIN_TOKEN
+    ) {
         return res.status(401).json({
             error: "Admin authentication required.",
         });
@@ -108,7 +129,7 @@ app.get("/api/health", async (req, res) => {
     }
 });
 
-// Save customer enquiry.
+// Save a customer enquiry.
 app.post("/api/enquiries", async (req, res) => {
     try {
         const name = cleanText(req.body?.name, 100);
@@ -123,11 +144,16 @@ app.post("/api/enquiries", async (req, res) => {
         const digits = phone.replace(/\D/g, "");
 
         if (!name) {
-            return res.status(400).json({ error: "Name is required." });
+            return res.status(400).json({
+                error: "Name is required.",
+            });
         }
 
-        if (!/^\+?[0-9\s()-]+$/.test(phone) ||
-            digits.length < 10 || digits.length > 15) {
+        if (
+            !/^\+?[0-9\s()-]+$/.test(phone) ||
+            digits.length < 10 ||
+            digits.length > 15
+        ) {
             return res.status(400).json({
                 error: "Please enter a valid phone number.",
             });
@@ -166,6 +192,7 @@ app.post("/api/enquiries", async (req, res) => {
         });
     } catch (error) {
         console.error("Save enquiry error:", error.message);
+
         return res.status(500).json({
             error: "Unable to save enquiry.",
         });
@@ -189,9 +216,12 @@ app.get("/api/enquiries", requireAdmin, async (req, res) => {
       ORDER BY id DESC
     `);
 
-        return res.json({ enquiries: result.rows });
+        return res.json({
+            enquiries: result.rows,
+        });
     } catch (error) {
         console.error("Load enquiries error:", error.message);
+
         return res.status(500).json({
             error: "Unable to load enquiries.",
         });
@@ -246,6 +276,7 @@ app.patch(
             });
         } catch (error) {
             console.error("Update status error:", error.message);
+
             return res.status(500).json({
                 error: "Unable to update enquiry status.",
             });
@@ -253,7 +284,7 @@ app.patch(
     }
 );
 
-// Unknown API routes.
+// Return JSON for unknown API routes.
 app.use("/api", (req, res) => {
     return res.status(404).json({
         error: "API route not found.",
@@ -261,7 +292,7 @@ app.use("/api", (req, res) => {
     });
 });
 
-// Error handler.
+// Error handling.
 app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
 
@@ -278,11 +309,13 @@ app.use((err, req, res, next) => {
     }
 
     console.error("API error:", err.message);
+
     return res.status(500).json({
         error: "Internal server error.",
     });
 });
 
+// Initialize database and start server.
 async function startServer() {
     try {
         await pool.query(`
